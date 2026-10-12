@@ -71,7 +71,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_type: [RelWithDebInfo, Debug]
+        include:
+          - build_type: RelWithDebInfo
+            sanitize: ''
+          - build_type: Debug
+            sanitize: ''
+          - build_type: Debug
+            sanitize: address,undefined
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -79,9 +85,13 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Build and run C++ core tests (${{ matrix.build_type }})
+      - name: Lint C++ core formatting
+        if: matrix.build_type == 'RelWithDebInfo'
+        run: yarn workspace @enriched-markdown/core lint-clang
+
+      - name: Build and run C++ core tests (${{ matrix.build_type }}${{ matrix.sanitize && ', sanitized' || '' }})
         env:
-          CORE_CMAKE_ARGS: -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          CORE_CMAKE_ARGS: -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCORE_SANITIZE=${{ matrix.sanitize }}
         run: yarn core:test
 
   rn-lint:

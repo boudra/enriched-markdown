@@ -41,6 +41,15 @@ FetchContent_MakeAvailable(doctest)
 set(CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
 enable_testing()
 
+# -DCORE_SANITIZE=address,undefined builds the libraries and tests with those
+# sanitizers. CI runs this on Linux; on macOS AddressSanitizer can deadlock
+# during its own start-up, so use undefined alone there.
+set(CORE_SANITIZE "" CACHE STRING "Comma-separated list for -fsanitize=, empty for none")
+if(CORE_SANITIZE)
+  add_compile_options(-fsanitize=${CORE_SANITIZE} -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=${CORE_SANITIZE})
+endif()
+
 # add_core_test(<area> <library targets...>): builds every .cpp under
 # tests/<area>/ into <area>_tests, linked against the given core libraries,
 # and registers it with ctest.

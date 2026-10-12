@@ -114,16 +114,14 @@ DelimiterCount countSingleUnderscores(std::string_view text, const MathLookup &m
 size_t countTripleAsterisks(std::string_view text) {
   size_t count = 0;
   size_t run = 0;
-  bool inFence = false;
+  char fence = 0;
   for (size_t i = 0; i < text.size(); ++i) {
-    if (isTripleAt(text, i)) {
+    if (consumeFence(text, i, fence)) {
       count += run / 3;
       run = 0;
-      inFence = !inFence;
-      i += 2;
       continue;
     }
-    if (inFence) {
+    if (fence != 0) {
       continue;
     }
     if (text[i] == '*') {
@@ -134,19 +132,6 @@ size_t countTripleAsterisks(std::string_view text) {
     }
   }
   return count + run / 3;
-}
-
-// countDoubleAsterisksOutsideCodeBlocks() / countDoubleUnderscoresOutsideCodeBlocks()
-size_t countDoubleMarkers(std::string_view text, char c) {
-  size_t count = 0;
-  scanOutsideFences(text, [&](size_t &i) {
-    if (text[i] == c && i + 1 < text.size() && text[i + 1] == c) {
-      ++count;
-      ++i;
-    }
-    return false;
-  });
-  return count;
 }
 
 // --- Openers ----------------------------------------------------------------
@@ -233,7 +218,7 @@ void boldItalic(RepairContext &ctx) {
   }
   if (countTripleAsterisks(text) % 2 == 1) {
     // areBoldItalicMarkersBalanced(): `**bold and *italic***` is overlap, not an opener
-    if (countDoubleMarkers(text, '*') % 2 == 0 && countSingleAsterisks(text, ctx.math()).count % 2 == 0) {
+    if (countDoubleMarkers(text, '*', ctx.math()) % 2 == 0 && countSingleAsterisks(text, ctx.math()).count % 2 == 0) {
       return;
     }
     ctx.closeAt(markerIndex, "***");
@@ -254,7 +239,7 @@ void bold(RepairContext &ctx) {
   if (ctx.insideAnyCode(markerIndex) || shouldSkipDoubleMarkerCompletion(text, content, markerIndex, '*')) {
     return;
   }
-  if (countDoubleMarkers(text, '*') % 2 != 1) {
+  if (countDoubleMarkers(text, '*', ctx.math()) % 2 != 1) {
     return;
   }
   // **content* : the trailing * is half of the closer unless an italic is
@@ -277,7 +262,7 @@ void italicDoubleUnderscore(RepairContext &ctx) {
   if (ctx.insideAnyCode(markerIndex) || shouldSkipDoubleMarkerCompletion(text, content, markerIndex, '_')) {
     return;
   }
-  if (countDoubleMarkers(text, '_') % 2 != 1) {
+  if (countDoubleMarkers(text, '_', ctx.math()) % 2 != 1) {
     return;
   }
   // __content_ : same half-closer rule as bold.

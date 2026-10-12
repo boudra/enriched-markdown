@@ -148,8 +148,8 @@ void htmlTags(RepairContext &ctx) {
       continue;
     }
     const bool atLineStart = p == 0 || text[p - 1] == '\n';
-    if (!atLineStart) {
-      continue; // prose; a later line may still start a tag
+    if (!atLineStart || !ctx.openerCanStillClose(p)) {
+      continue; // prose, or a tag left open in an earlier block; a later line may still start one
     }
     if (!ctx.code().inside(p)) {
       ctx.erase(jsTrimEnd(text.substr(0, p)).size());
@@ -199,11 +199,13 @@ void setextHeadings(RepairContext &ctx) {
 namespace {
 
 // findFirstIncompleteBracket(): in text-only mode the bracket to drop is the
-// first unmatched `[`, skipping complete links.
-size_t findFirstIncompleteBracket(std::string_view text, size_t maxPos, const CodeLookup &code,
-                                  const LineMarkerLookup &markers) {
-  for (size_t j = 0; j < maxPos; ++j) {
-    if (text[j] != '[' || code.inside(j) || (j > 0 && text[j - 1] == '!') || isBracketNotALink(text, j, markers)) {
+// first unmatched `[` in the last block that can still close, skipping
+// complete links.
+size_t findFirstIncompleteBracket(RepairContext &ctx, size_t maxPos) {
+  const std::string_view text = ctx.text();
+  for (size_t j = ctx.lastBlockStart(); j < maxPos; ++j) {
+    if (text[j] != '[' || ctx.code().inside(j) || (j > 0 && text[j - 1] == '!') ||
+        isBracketNotALink(text, j, ctx.markers()) || !ctx.openerCanStillClose(j)) {
       continue;
     }
     const size_t closing = findMatchingClosingBracket(text, j);
@@ -233,7 +235,7 @@ void links(RepairContext &ctx, LinkMode mode) {
   if (lastParen != npos && !isEscaped(text, lastParen) && !ctx.code().inside(lastParen) &&
       text.find(')', lastParen + 2) == npos) {
     const size_t open = findMatchingOpeningBracket(text, lastParen);
-    if (open != npos && !ctx.code().inside(open)) {
+    if (open != npos && !ctx.code().inside(open) && ctx.openerCanStillClose(open)) {
       const bool isImage = open > 0 && text[open - 1] == '!';
       if (isImage) {
         ctx.erase(open - 1);
@@ -259,10 +261,13 @@ void links(RepairContext &ctx, LinkMode mode) {
         isBracketNotALink(text, idx, ctx.markers())) {
       continue;
     }
+    if (!ctx.openerCanStillClose(idx)) {
+      return; // left open in an earlier block: literal text
+    }
     if (idx > 0 && text[idx - 1] == '!') {
       ctx.erase(idx - 1);
     } else if (mode == LinkMode::TextOnly) {
-      ctx.erase(findFirstIncompleteBracket(text, idx, ctx.code(), ctx.markers()), 1);
+      ctx.erase(findFirstIncompleteBracket(ctx, idx), 1);
     } else {
       // A closer anchored at the bracket, so emphasis opened inside the link
       // text closes inside it: [**bold link -> [**bold link**](...)
@@ -286,7 +291,7 @@ void inlineCode(RepairContext &ctx) {
     }
   }
   const size_t lastTick = text.rfind('`');
-  if (lastTick == npos || countNonOverlapping(text, "```") % 2 == 1) { // isInsideIncompleteCodeBlock()
+  if (lastTick == npos || endsInsideFence(text)) { // isInsideIncompleteCodeBlock()
     return;
   }
   const std::string_view content = text.substr(lastTick + 1);
@@ -306,14 +311,14 @@ void strikethrough(RepairContext &ctx) {
     if (content->empty() || isWhitespaceOrMarkersOnly(*content) || ctx.insideAnyCode(markerIndex)) {
       return;
     }
-    if (countNonOverlapping(text, "~~") % 2 == 1) {
+    if (countDoubleMarkers(text, '~', ctx.math()) % 2 == 1) {
       ctx.closeAt(markerIndex, "~~");
     }
     return;
   }
   // ~~content~ -> ~~content~~
   if (matchHalfCompleteMarker(text, "~~", '~') && !ctx.insideAnyCode(markerIndex) &&
-      countNonOverlapping(text, "~~") % 2 == 1) {
+      countDoubleMarkers(text, '~', ctx.math()) % 2 == 1) {
     ctx.closeAt(markerIndex, "~");
   }
 }

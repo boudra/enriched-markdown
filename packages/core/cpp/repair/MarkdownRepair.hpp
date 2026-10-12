@@ -42,6 +42,18 @@
 //   for display math.
 // - The single-underscore counter applies the same open/close flanking rule
 //   as the asterisk counter (`_a_ b_` does not reopen).
+// - The handlers that erase instead of closing (an incomplete link URL, an
+//   incomplete image, a tag that starts a line) apply the same block rule:
+//   left open in an earlier block, the construct is literal and the text
+//   after it is kept. The reference deletes everything after it.
+// - A blockquote, a thematic break and a `=` setext underline end a
+//   paragraph too, not only a blank line, a fence, a heading or a list item.
+// - A `~~~` fence is code, like a ``` fence. The reference knows only the
+//   latter, so it closed emphasis and strikethrough inside tilde fences.
+// - `**`, `__` and `~~` inside math are not delimiters, as `*` and `_`
+//   already were not, and `~~` inside a fence is not one either. With
+//   `inlineMath` off a lone `$` is currency, so `$5 and *x` closes; the
+//   reference treats every `$` as math.
 // The affected recorded cases in the test data are marked as ours.
 //
 // Additions with no reference counterpart: closers for spoilers, highlight,
@@ -73,9 +85,9 @@ struct RepairOptions {
   bool htmlTags = true;
   bool images = true;
   bool inlineCode = true;
-  bool inlineMath = false;  // `$…$`; opt-in upstream too, since `$` is ambiguous with currency
+  bool inlineMath = false; // `$…$`; opt-in upstream too, since `$` is ambiguous with currency
   bool italic = true;
-  bool displayMath = true;  // `$$…$$`
+  bool displayMath = true; // `$$…$$`
   bool links = true;
   bool setextHeadings = true;
   bool singleTilde = true;
@@ -108,4 +120,4 @@ bool isWithinCodeBlock(std::string_view text, size_t position);
 bool isWithinMathBlock(std::string_view text, size_t position);
 bool isWithinLinkOrImageUrl(std::string_view text, size_t position);
 
-}  // namespace Markdown
+} // namespace Markdown

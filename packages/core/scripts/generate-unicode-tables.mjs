@@ -56,12 +56,14 @@ lines.push('  uint32_t last;');
 lines.push('};');
 lines.push('');
 lines.push(`inline constexpr size_t kLetterOrNumberRangeCount = ${ranges.length};`);
+lines.push('// clang-format off');
 lines.push('inline constexpr Range kLetterOrNumberRanges[kLetterOrNumberRangeCount] = {');
 for (let i = 0; i < ranges.length; i += 4) {
   const chunk = ranges.slice(i, i + 4).map(([a, b]) => `{${hex(a)}, ${hex(b)}}`);
   lines.push('    ' + chunk.join(', ') + ',');
 }
 lines.push('};');
+lines.push('// clang-format on');
 lines.push('');
 lines.push('} // namespace Markdown::UnicodeTables');
 lines.push('');

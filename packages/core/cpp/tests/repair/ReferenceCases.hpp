@@ -20,7 +20,7 @@ enum class Helper { IsWordChar, IsWithinCodeBlock, IsWithinMathBlock, IsWithinLi
 struct HelperCall {
   Helper fn;
   std::string_view text;
-  uint32_t argument;  // code point for IsWordChar, byte position otherwise
+  uint32_t argument; // code point for IsWordChar, byte position otherwise
   bool expected;
 };
 
@@ -30,4 +30,4 @@ extern const size_t kCaseCount;
 extern const HelperCall kHelperCalls[];
 extern const size_t kHelperCallCount;
 
-}  // namespace ReferenceCases
+} // namespace ReferenceCases

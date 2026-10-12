@@ -83,7 +83,7 @@ void repairInlineMarkdownInPlace(std::string &text, const RepairOptions &options
     text.pop_back();
   }
 
-  RepairContext ctx(text);
+  RepairContext ctx(text, options.inlineMath);
   if (options.singleTilde && !options.subscript) { // with subscripts, `~x~` is markup
     RepairHandlers::singleTilde(ctx);
   }

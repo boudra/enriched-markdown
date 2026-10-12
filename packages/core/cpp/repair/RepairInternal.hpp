@@ -28,7 +28,7 @@ constexpr size_t npos = std::string_view::npos;
 constexpr std::string_view kIncompleteLinkSuffix = "](streamdown:incomplete-link)";
 static_assert(kIncompleteLinkSuffix.substr(2, kIncompleteLinkUrl.size()) == kIncompleteLinkUrl,
               "kIncompleteLinkSuffix must embed kIncompleteLinkUrl");
-constexpr std::string_view kZeroWidthSpace = "\xE2\x80\x8B";  // U+200B
+constexpr std::string_view kZeroWidthSpace = "\xE2\x80\x8B"; // U+200B
 
 // --- UTF-8 -----------------------------------------------------------------
 
@@ -84,6 +84,16 @@ bool isEscaped(std::string_view text, size_t i);
 
 bool isTripleAt(std::string_view text, size_t i);
 
+// A fence marker: ``` anywhere, as the reference counts it, or ~~~ with only
+// indentation before it on its line. `fence` is the character of the open
+// fence, or 0. A marker of the other character inside an open fence is
+// content. When a marker is consumed, i is advanced to its last byte (the
+// caller's loop takes the final step) and the result is true.
+bool consumeFence(std::string_view text, size_t &i, char &fence);
+
+// The text ends inside an unclosed fence.
+bool endsInsideFence(std::string_view text);
+
 // Non-overlapping occurrence count, like text.match(/needle/g).length.
 size_t countNonOverlapping(std::string_view text, std::string_view needle);
 
@@ -117,6 +127,7 @@ bool isWithinHtmlTag(std::string_view text, size_t position);
 // isHorizontalRule(): the line containing markerIndex is only `marker`
 // characters (at least three) and spaces/tabs.
 bool isHorizontalRule(std::string_view text, size_t markerIndex, char marker);
+bool isHorizontalRuleLine(std::string_view line, char marker);
 
 // isPartOfTripleBacktick(): the backtick at i belongs to a ``` sequence.
 bool isPartOfTriple(std::string_view text, size_t i);
@@ -133,35 +144,42 @@ size_t findMatchingClosingBracket(std::string_view text, size_t openIndex);
 // isInsideCodeBlock() as a lookup: inside(p) is true when scanning [0, p)
 // ends inside inline or fenced code. Escaped backticks are skipped.
 class CodeLookup {
- public:
+public:
   explicit CodeLookup(std::string_view text);
   bool inside(size_t position) const;
 
- private:
+private:
   std::vector<uint8_t> insideAt_;
 };
 
 // isWithinMathBlock() as a lookup: inside(p) is true when scanning [0, p)
 // ends inside `$…$`, `$$…$$`, `\(…\)` or `\[…\]`. Built only when the text
-// contains a math delimiter, since most callers check that first.
+// contains a math delimiter, since most callers check that first. With
+// inlineDollar false a lone `$` is currency, not a delimiter; the reference
+// always treats it as math, so `$5 and *x` never closed there.
 class MathLookup {
- public:
-  explicit MathLookup(std::string_view text);
+public:
+  explicit MathLookup(std::string_view text, bool inlineDollar = true);
   bool inside(size_t position) const;
 
- private:
+private:
   bool hasDelimiters_;
   std::vector<uint8_t> insideAt_;
 };
 
+// countDoubleAsterisksOutsideCodeBlocks() and its `_` / `~` counterparts:
+// doubled markers outside fences and math. The reference counts `~~` with a
+// plain string search, so one inside a fence or `$$…$$` is a delimiter there.
+size_t countDoubleMarkers(std::string_view text, char c, const MathLookup &math);
+
 // isWithinCompleteInlineCode() as a lookup: inside(p) is true when p sits
 // strictly inside an inline code span that has both backticks.
 class CompleteInlineCodeLookup {
- public:
+public:
   explicit CompleteInlineCodeLookup(std::string_view text);
   bool inside(size_t position) const;
 
- private:
+private:
   std::vector<uint8_t> insideAt_;
 };
 
@@ -171,12 +189,12 @@ class CompleteInlineCodeLookup {
 // the lookup gives the same answers in O(1). The parity tests check the two
 // agree on every position of every recorded case.
 class LineContextLookup {
- public:
+public:
   explicit LineContextLookup(std::string_view text);
   bool insideLinkUrl(size_t position) const;
   bool insideHtmlTag(size_t position) const;
 
- private:
+private:
   static constexpr uint8_t kLinkUrl = 1;
   static constexpr uint8_t kHtmlTag = 2;
   std::vector<uint8_t> flags_;
@@ -194,11 +212,11 @@ struct LineMarkers {
 // longer walks back to the line start per `[`, which was quadratic on
 // bracket-heavy unwrapped paragraphs.
 class LineMarkerLookup {
- public:
+public:
   explicit LineMarkerLookup(std::string_view text);
   const LineMarkers &lineFor(size_t position) const;
 
- private:
+private:
   std::vector<size_t> lineStarts_;
   std::vector<LineMarkers> lines_;
 };
@@ -227,14 +245,18 @@ bool isBracketNotALink(std::string_view text, size_t idx, const LineMarkerLookup
 // or math() are valid only until the next edit. Handlers therefore do all
 // their reading first and edit as their final step.
 class RepairContext {
- public:
-  explicit RepairContext(std::string &text) : text_(text) {}
+public:
+  explicit RepairContext(std::string &text, bool inlineMath = false) : text_(text), inlineMath_(inlineMath) {}
 
   // --- reading
-  std::string_view text() const { return text_; }
+  std::string_view text() const {
+    return text_;
+  }
   // The text without the closer tail, for handlers whose counting would be
   // confused by a closer glued onto the user's last delimiter.
-  std::string_view textBeforeClosers() const { return closers_.empty() ? text() : text().substr(0, closersStart_); }
+  std::string_view textBeforeClosers() const {
+    return closers_.empty() ? text() : text().substr(0, closersStart_);
+  }
   const CodeLookup &code();
   const MathLookup &math();
   // Built over textBeforeClosers(); valid for positions before the tail.
@@ -255,18 +277,25 @@ class RepairContext {
   // cross a blank line or leave a heading, so the closer would only be a stray
   // marker in a later block. (The reference appends regardless.)
   void closeAt(size_t openerIndex, std::string_view closer);
+  // The rule closeAt() applies, for the handlers that erase instead of
+  // closing: an opener in an earlier block is literal, not a reason to drop
+  // the text after it.
+  bool openerCanStillClose(size_t openerIndex);
+  // Start of the last block of textBeforeClosers(): the text after the last
+  // blank line or the last line that interrupts a paragraph.
+  size_t lastBlockStart();
 
- private:
+private:
   struct Closer {
     size_t openerIndex;
     size_t length;
   };
 
-  bool openerCanStillClose(size_t openerIndex);
   void dropLookups();
   void invalidate();
 
   std::string &text_;
+  bool inlineMath_; // whether a lone `$` opens math (RepairOptions::inlineMath)
 
   std::optional<CodeLookup> code_;
   std::optional<MathLookup> math_;
@@ -274,30 +303,27 @@ class RepairContext {
   std::optional<LineContextLookup> lines_;
   std::optional<LineMarkerLookup> markers_;
 
-  std::vector<Closer> closers_;  // in text order, contiguous from closersStart_
+  std::vector<Closer> closers_; // in text order, contiguous from closersStart_
   size_t closersStart_ = 0;
-  std::optional<size_t> blockStart_;  // start of the last block, cached for openerCanStillClose()
+  std::optional<size_t> blockStart_; // start of the last block, cached for openerCanStillClose()
 };
 
-// Visits every byte index outside ``` fences, in order. The visitor returns
-// true to stop early and may advance `i` past bytes it consumed; most leave
-// it alone.
-template <class Visitor>
-void scanOutsideFences(std::string_view text, Visitor visit) {
-  bool inCodeBlock = false;
+// Visits every byte index outside fences (see consumeFence()), in order. The
+// visitor returns true to stop early and may advance `i` past bytes it
+// consumed; most leave it alone.
+template <class Visitor> void scanOutsideFences(std::string_view text, Visitor visit) {
+  char fence = 0;
   for (size_t i = 0; i < text.size(); ++i) {
-    if (isTripleAt(text, i)) {
-      inCodeBlock = !inCodeBlock;
-      i += 2;
+    if (consumeFence(text, i, fence) || fence != 0) {
       continue;
     }
-    if (!inCodeBlock && visit(i)) {
+    if (visit(i)) {
       return;
     }
   }
 }
 
-}  // namespace Markdown::RepairInternal
+} // namespace Markdown::RepairInternal
 
 // One function per reference handler. The pipeline runs them in priority
 // order on a shared context; tests run them individually.
@@ -322,4 +348,4 @@ void spoilers(RepairContext &ctx);
 void highlight(RepairContext &ctx);
 void superscript(RepairContext &ctx);
 void subscript(RepairContext &ctx);
-}  // namespace Markdown::RepairHandlers
+} // namespace Markdown::RepairHandlers

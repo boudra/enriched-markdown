@@ -110,9 +110,9 @@ TEST_CASE("math closers are anchored at their opener") {
   RepairOptions o;
   o.inlineMath = true;
   CHECK(repair("It costs $5.\n\nThe formula $$x^2$$", o) == "It costs $5.\n\nThe formula $$x^2$$");
-  CHECK(repair("$a **b \\$5", o) == "$a **b \\$5**$");
+  CHECK(repair("$a **b \\$5", o) == "$a **b \\$5$"); // `**` inside math is not a delimiter
   CHECK(repair("$$a\n\n`$$` b") == "$$a\n\n`$$` b");
-  CHECK(repair("$$a **b `$$`") == "$$a **b `$$`**$$");
+  CHECK(repair("$$a **b `$$`") == "$$a **b `$$`$$");
 }
 
 // A CRLF blank line is a block boundary, like an LF one.
@@ -139,4 +139,84 @@ TEST_CASE("task-list check only matches a checkbox") {
 TEST_CASE("a fence or heading after the opener is a block boundary") {
   CHECK(repair("**a\n```\ncode") == "**a\n```\ncode");
   CHECK(repair("**a\n# heading") == "**a\n# heading");
+}
+
+// Handlers that erase rather than close apply the same block rule: a
+// construct left open in an earlier block is literal, not a reason to drop
+// everything after it.
+TEST_CASE("erase paths stop at a block boundary") {
+  CHECK(repair("[a](http://x\n\nmore") == "[a](http://x\n\nmore");
+  CHECK(repair("![alt](http://x\n\nmore") == "![alt](http://x\n\nmore");
+  CHECK(repair("pic ![alt\n\nmore") == "pic ![alt\n\nmore");
+  CHECK(repair("<video src=\"x\n\nmore") == "<video src=\"x\n\nmore");
+  CHECK(repair("<a\n\n<video src=\"x") == "<a");
+  CHECK(repair("[a](http://x\n\n[b") == "[a](http://x\n\n[b](streamdown:incomplete-link)");
+  CHECK(repair("[a](http://x\nmore") ==
+        "[a](streamdown:incomplete-link)"); // same paragraph: still the reference's rule
+  RepairOptions o;
+  o.linkMode = LinkMode::TextOnly;
+  CHECK(repair("[a\n\n[b", o) == "[a\n\nb");
+  CHECK(repair("[a](http://x\n\nmore", o) == "[a](http://x\n\nmore");
+}
+
+TEST_CASE("tilde fences are code") {
+  CHECK(repair("~~~\nx **b") == "~~~\nx **b");
+  CHECK(repair("~~~js\nx `y") == "~~~js\nx `y");
+  CHECK(repair("~~~\nx\n~~~\n**b") == "~~~\nx\n~~~\n**b**");
+  CHECK(repair("  ~~~\n  x **b") == "  ~~~\n  x **b");
+  CHECK(repair("```\n~~~\n```\n**b") == "```\n~~~\n```\n**b**"); // a tilde line inside a backtick fence is content
+  CHECK(repair("~~~\n```\n~~~\n**b") == "~~~\n```\n~~~\n**b**");
+  CHECK(repair("a~~~b ~~c") == "a~~~b ~~c"); // mid-line tildes are not a fence
+}
+
+TEST_CASE("double markers inside math or a fence are not delimiters") {
+  CHECK(repair("$$ a ** b") == "$$ a ** b$$");
+  CHECK(repair("$$ a __b") == "$$ a __b$$");
+  CHECK(repair("$$ a ~~b") == "$$ a ~~b$$");
+  CHECK(repair("**x** $$ a ** b") == "**x** $$ a ** b$$");
+  CHECK(repair("```\n~~a\n```\n~~b") == "```\n~~a\n```\n~~b~~");
+}
+
+TEST_CASE("blocks that interrupt a paragraph") {
+  CHECK(repair("**a\n> quote") == "**a\n> quote");
+  CHECK(repair("> **a\n> b") == "> **a\n> b**");
+  CHECK(repair("> **a\nb") == "> **a\nb**"); // lazy continuation
+  CHECK(repair("> **a\n>\n> b") == "> **a\n>\n> b");
+  CHECK(repair("**a\n---") == "**a\n---");
+  CHECK(repair("**a\n* * *") == "**a\n* * *");
+  CHECK(repair("**a\n2. b") == "**a\n2. b");
+  CHECK(repair("**a\n-") == "**a\n-\xE2\x80\x8B**"); // a bare `-` is a setext underline, kept inside the paragraph
+}
+
+TEST_CASE("a lone dollar is currency unless inline math is on") {
+  CHECK(repair("It costs $5 and **bold") == "It costs $5 and **bold**");
+  CHECK(repair("It costs $5 and ~~gone") == "It costs $5 and ~~gone~~");
+  CHECK(repair("It costs $5 and *it") == "It costs $5 and *it*"); // the reference left this open
+  CHECK(repair("$$ a ** b") == "$$ a ** b$$");                    // display math is always math
+  RepairOptions o;
+  o.inlineMath = true;
+  CHECK(repair("$a **b", o) == "$a **b$");
+  CHECK(repair("costs $5 and **bold", o) == "costs $5 and **bold$"); // ambiguous by design: the `$` opened math
+}
+
+TEST_CASE("blockquote depth is the block's, not the previous line's") {
+  CHECK(repair("> **a\nb\n> c") == "> **a\nb\n> c**"); // lazy continuation, then the quote resumes
+  CHECK(repair("> **a\n> > c") == "> **a\n> > c");
+  CHECK(repair("> ~~~\n> x **b") == "> ~~~\n> x **b");
+}
+
+TEST_CASE("text-only link repair skips brackets that can no longer close") {
+  RepairOptions o;
+  o.linkMode = LinkMode::TextOnly;
+  CHECK(repair("# [a\n[b", o) == "# [a\nb");
+}
+
+TEST_CASE("inline code parity ignores backticks inside a closed fence") {
+  CHECK(repair("~~~\n`\n~~~\n`b") == "~~~\n`\n~~~\n`b`");
+  CHECK(repair("```\n`\n```\n`b") == "```\n`\n```\n`b`");
+}
+
+TEST_CASE("a setext `=` underline ends the paragraph") {
+  CHECK(repair("**a\n===") == "**a\n===");
+  CHECK(repair("**a\n=\nb") == "**a\n=\nb");
 }

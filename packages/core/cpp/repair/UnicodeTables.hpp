@@ -16,6 +16,7 @@ struct Range {
 };
 
 inline constexpr size_t kLetterOrNumberRangeCount = 770;
+// clang-format off
 inline constexpr Range kLetterOrNumberRanges[kLetterOrNumberRangeCount] = {
     {0x0030, 0x0039}, {0x0041, 0x005A}, {0x0061, 0x007A}, {0x00AA, 0x00AA},
     {0x00B2, 0x00B3}, {0x00B5, 0x00B5}, {0x00B9, 0x00BA}, {0x00BC, 0x00BE},
@@ -211,5 +212,6 @@ inline constexpr Range kLetterOrNumberRanges[kLetterOrNumberRangeCount] = {
     {0x2B820, 0x2CEA1}, {0x2CEB0, 0x2EBE0}, {0x2EBF0, 0x2EE5D}, {0x2F800, 0x2FA1D},
     {0x30000, 0x3134A}, {0x31350, 0x323AF},
 };
+// clang-format on
 
 } // namespace Markdown::UnicodeTables
