@@ -25,7 +25,7 @@
 
 ## Android
 
-- [Installation](https://docs.swmansion.com/enriched-markdown/android/basics/installation): Gradle setup, requirements, the four artifacts (including the optional `math`), native libraries and ABIs, the Internet permission, and R8.
+- [Installation](https://docs.swmansion.com/enriched-markdown/android/basics/installation): Gradle setup, requirements, the artifacts (including the optional `math` and `code-highlight`), native libraries and ABIs, the Internet permission, and R8.
 - [Your first markdown screen](https://docs.swmansion.com/enriched-markdown/android/basics/your-first-screen): Rendering Markdown in Compose, handling link clicks, a first style, and how a per-component style relates to the theme.
 - [EnrichedMarkdownText](https://docs.swmansion.com/enriched-markdown/android/api-reference/enriched-markdown-text): Every composable parameter - flags, selection and copy, links, task lists, spoiler overlays, plugins and plugin events, last-block margin.
 - [MarkdownTheme](https://docs.swmansion.com/enriched-markdown/android/api-reference/markdown-theme): Providing a style to a subtree, building and merging `MarkdownStyle` layers, `rememberMarkdownStyle` with Material 3, and dark mode.
@@ -33,6 +33,7 @@
 - [Element structure](https://docs.swmansion.com/enriched-markdown/android/api-reference/element-structure): Every Markdown element the renderer draws, nesting, how tables and display math split the document into segments, images, and spacing.
 - [Parser extensions](https://docs.swmansion.com/enriched-markdown/android/guides/parser-extensions): The `Md4cFlags` switches, what is always on (including spoilers), and which flags change the meaning of existing markers.
 - [LaTeX math](https://docs.swmansion.com/enriched-markdown/android/guides/latex-math): The optional `math` artifact and `LatexMathPlugin` - enabling it, dollar-sign rules, styling, error events, and TalkBack.
+- [Code highlighting](https://docs.swmansion.com/enriched-markdown/android/guides/code-highlighting): The optional `code-highlight` artifact and `CodeHighlightPlugin` - enabling it, supported languages, token colors, and what it costs.
 - [Images and caching](https://docs.swmansion.com/enriched-markdown/android/guides/image-caching): Supported image sources, downsampling, the memory and disk caches, and why requests with headers skip the disk cache.
 - [Custom fonts](https://docs.swmansion.com/enriched-markdown/android/guides/custom-fonts): Using `FontFamily` resources, why a multi-file family collapses to one face, and how font weights are rounded.
 - [Compose interop](https://docs.swmansion.com/enriched-markdown/android/guides/compose-interop): What the hosted view means for previews, sizing, lazy lists and view recycling, selection, and recomposition.

@@ -52,7 +52,7 @@ The available blocks:
 
 Values use Compose types throughout: `Color`, `Dp` for lengths, `TextUnit` (`sp`) for text metrics, plus `FontFamily`, `FontWeight`, `FontStyle`, `TextAlign`, `TextDecoration`, and `Alignment.Horizontal`.
 
-The optional `math` artifact adds two more blocks, `math { }` and `inlineMath { }`, for LaTeX formulas. They are documented with the plugin in [LaTeX math](/android/guides/latex-math#styling).
+The optional `math` artifact adds two more blocks, `math { }` and `inlineMath { }`, for LaTeX formulas. They are documented with the plugin in [LaTeX math](/android/guides/latex-math#styling). The optional `code-highlight` artifact adds `codeHighlight { }`, for the token colors of highlighted code blocks; see [Code highlighting](/android/guides/code-highlighting#styling).
 
 :::caution
 `fontSize` and `lineHeight` must be given in `sp`. A `TextUnit` of any other type (`em`, or `TextUnit.Unspecified`) makes the style throw an `IllegalArgumentException` when it is resolved.
@@ -100,7 +100,10 @@ MarkdownTheme(
   style = rememberMarkdownStyle {
     paragraph { color = MaterialTheme.colorScheme.onSurface }
     link { color = MaterialTheme.colorScheme.primary }
-    codeBlock { backgroundColor = MaterialTheme.colorScheme.surfaceVariant }
+    codeBlock {
+      color = MaterialTheme.colorScheme.onSurfaceVariant
+      backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+    }
   },
 ) {
   Content()
@@ -114,6 +117,8 @@ MarkdownTheme(style = if (isSystemInDarkTheme()) DarkMarkdownStyle else LightMar
   Content()
 }
 ```
+
+A code block that follows the theme needs its text `color` set alongside the background, since the default text color is made for the default dark block. With [code highlighting](/android/guides/code-highlighting#styling), the token palette is made for a dark block too, so a light code block needs `codeHighlight { }` colors as well.
 
 Use [`rememberMarkdownStyle`](/android/api-reference/markdown-theme#remembermarkdownstyle) whenever the block reads `MaterialTheme`, so the style rebuilds when the color scheme changes.
 
@@ -310,6 +315,8 @@ markdownStyle {
 | `borderWidth`     | `Dp`         | `1.dp`                 | Border width                          |
 | `cornerRadius`    | `Dp`         | `8.dp`                 | Corner radius                         |
 | `padding`         | `Dp`         | `16.dp`                | Inner padding, the same on every side |
+
+With the optional `code-highlight` artifact, tokens inside the block are recolored by language; `color` stays the color of everything the highlighter leaves uncolored. Token colors have their own [`codeHighlight`](/android/guides/code-highlighting#styling) block.
 
 ```kotlin
 markdownStyle {

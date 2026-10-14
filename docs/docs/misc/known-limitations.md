@@ -223,8 +223,12 @@ These apply to the standalone Android library,
 
 - **Read-only.** There is no editor, only the renderer - see the
   [Roadmap](/misc/roadmap#the-editor-on-native).
-- **No syntax highlighting for fenced code blocks.** They render in the
-  code-block style as plain monospaced text. (`==highlight==` marks do render.)
+- **Code-block highlighting is opt-in and fixed.** Fenced code is colored only
+  with the optional `code-highlight` artifact and `CodeHighlightPlugin` (see
+  [Code highlighting](/android/guides/code-highlighting)); without them it
+  renders in one color. The 14 bundled grammars cannot be trimmed or extended,
+  the default token palette is made for a dark code block and does not follow
+  the system theme, and code blocks have no header or copy button.
 - **Nested tables are not rendered.** A table inside a list item or blockquote
   is dropped; only top-level tables are drawn.
 - **An HTML `<video>` block makes the whole document render empty.** The shared

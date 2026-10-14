@@ -7,7 +7,7 @@ import SyntaxColorsSrc from '!!raw-loader!@site/src/examples/react-native/rich-t
 
 # Code-block syntax highlighting
 
-Fenced code blocks are syntax-highlighted natively via [tree-sitter](https://tree-sitter.github.io/). Highlighting is **foreground-only** - it recolors tokens and never changes text metrics, so a code block's measured height always matches its drawn height. In the React Native package it is on by default on iOS and Android with a curated set of languages, and can be trimmed or disabled to reduce binary size. The standalone iOS SDK ships it as an optional product you enable per view, and the standalone Android SDK has no syntax highlighting yet - see [iOS and Android SDKs](#ios-and-android-sdks).
+Fenced code blocks are syntax-highlighted natively via [tree-sitter](https://tree-sitter.github.io/). Highlighting is **foreground-only** - it recolors tokens and never changes text metrics, so a code block's measured height always matches its drawn height. In the React Native package it is on by default on iOS and Android with a curated set of languages, and can be trimmed or disabled to reduce binary size. The standalone iOS SDK ships it as an optional product you enable per view, and the standalone Android SDK as an optional artifact you enable with a plugin - see [iOS and Android SDKs](#ios-and-android-sdks).
 
 :::note
 Syntax highlighting is a native feature - it is not available on the web build, where code blocks render as plain (uncolored) monospaced text.
@@ -86,12 +86,19 @@ The standalone native SDKs are configured in code rather than through `package.j
 
 See the [iOS syntax highlighting guide](/ios/guides/syntax-highlighting) for the full setup.
 
-**Android** - there is no code-block syntax highlighting, header or copy button yet: code blocks render in a single color.
+**Android** - highlighting is the optional `com.swmansion.enriched.markdown:code-highlight` artifact, and it does nothing until you enable `CodeHighlightPlugin` - as a Compose scope (`CodeHighlightPlugin { }`, or `MarkdownPlugins(...)` together with other plugins) or per instance through the `plugins` parameter. Compared with the React Native package:
+
+- The grammar set is fixed at the same 14 [default languages](#supported-languages) - there is nothing to trim or add, and the opt-in grammars are not available. Info strings match case-insensitively.
+- Token colors are set with the `codeHighlight { }` block of `markdownStyle`. The default palette is GitHub's dark one and does **not** follow light or dark mode: if you give `codeBlock` a light background, set the token colors too.
+- The tokens of each block are cached, so a re-render that leaves a block's code unchanged - a lazy list item scrolled back into view, a configuration change - does not parse it again. Blocks over 50 KB or 2,000 lines stay plain.
+- There is no code-block header or copy button: a highlighted block is drawn like a plain one, only recolored.
+
+See the [Android code highlighting guide](/android/guides/code-highlighting) for the full setup.
 
 
 ## Reducing binary size
 
-In the React Native package, only the grammars you compile end up in your binary, so trimming the language list is the main size lever - and because the highlighter degrades to plain code whenever a grammar is absent, nothing breaks when you remove one. You can also turn highlighting off entirely. On the standalone iOS SDK the size lever is the product itself: leave out `EnrichedMarkdownSyntaxHighlighting` and no grammar ships.
+In the React Native package, only the grammars you compile end up in your binary, so trimming the language list is the main size lever - and because the highlighter degrades to plain code whenever a grammar is absent, nothing breaks when you remove one. You can also turn highlighting off entirely. On the standalone SDKs the size lever is the optional module itself: leave out `EnrichedMarkdownSyntaxHighlighting` (iOS) or the `code-highlight` artifact (Android) and no grammar ships. On Android the artifact's native library is about 8 MB per ABI uncompressed (what an installed app carries) and about 1.1 MB per ABI compressed (roughly what it adds to a download).
 
 ## How it works
 
@@ -114,6 +121,11 @@ Highlighting runs synchronously when a block is applied, with a size cap (roughl
 - [`SyntaxToken(_:)`](/ios/api-reference/style-properties#syntaxtoken) - the 14 token colors.
 - [`.markdownCodeBlockLayout(.scrollable)`](/ios/api-reference/enriched-markdown-text#markdowncodeblocklayout) - the header bar and copy button.
 - [`.onCodeBlockCopy`](/ios/api-reference/enriched-markdown-text#oncodeblockcopy) - fires when code is copied.
+
+**Android**
+
+- [`CodeHighlightPlugin`](/android/guides/code-highlighting) - enable highlighting for a Compose subtree or a single instance.
+- [`codeHighlight { }`](/android/guides/code-highlighting) - the 14 token colors, set in `markdownStyle`.
 
 **Choosing languages / reducing binary size (React Native package)** - configure through the `enriched-markdown` block of your app's `package.json`:
 

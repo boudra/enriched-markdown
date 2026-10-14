@@ -147,7 +147,7 @@ Each has its own page - under **Rich text formatting**, or under the React Nativ
 | ----------------------- | :----------: | :-: | :-----: | :-: | ------------------------------------------------------------------ |
 | LaTeX math              |     Yes      | Yes |   Yes   | Yes | [LaTeX math](/rich-text-formatting/latex-math)                     |
 | Mentions                |     Yes      | No  |   No    | Yes | [Mentions](/rich-text-formatting/mentions)                         |
-| Code-block highlighting |     Yes      | Yes |   No    | No  | [Code-block highlighting](/rich-text-formatting/code-highlighting) |
+| Code-block highlighting |     Yes      | Yes |   Yes   | No  | [Code-block highlighting](/rich-text-formatting/code-highlighting) |
 | Markdown streaming      |     Yes      | No  |   No    | No  | [Markdown streaming](/rich-text-formatting/markdown-streaming)     |
 | Link pills              |     Yes      | No  |   No    | No  | [Link pills](/react-native/guides/link-pills)                      |
 | Link menus              |     Yes      | No  |   No    | No  | [Link menus](/react-native/guides/link-menus)                      |
@@ -170,8 +170,10 @@ On the standalone SDKs, the advanced features that render are optional add-ons:
 - **Code-block highlighting** - on iOS, add the optional
   `EnrichedMarkdownSyntaxHighlighting` product and apply
   `.markdownSyntaxHighlighting()` (see
-  [Syntax highlighting](/ios/guides/syntax-highlighting)). Android code blocks
-  render in one color.
+  [Syntax highlighting](/ios/guides/syntax-highlighting)); on Android, add the
+  optional `com.swmansion.enriched.markdown:code-highlight` artifact and
+  register `CodeHighlightPlugin` (see
+  [Android code highlighting](/android/guides/code-highlighting)).
 - **Mentions** - there is no mention support in either SDK, but mention links
   written as ordinary Markdown links (`[display](url)`) still render and are
   tappable like any other link.

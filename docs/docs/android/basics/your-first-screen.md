@@ -128,3 +128,4 @@ You have a working screen. From here:
 - [Compose interop](/android/guides/compose-interop) - sizing, lists, selection, and previews.
 - [Images and caching](/android/guides/image-caching) - where images can come from and how they are cached.
 - [LaTeX math](/android/guides/latex-math) - rendering equations with the optional `math` artifact.
+- [Code highlighting](/android/guides/code-highlighting) - coloring fenced code with the optional `code-highlight` artifact.

@@ -84,9 +84,16 @@ newer.
 | **AndroidX** | Required |
 
 It is published to Maven Central under the `com.swmansion.enriched.markdown`
-group as four [artifacts](/android/basics/installation#artifacts): `parser`,
-`ui`, `compose` (the one apps depend on; it pulls in `ui` and `parser`) and the
-optional `math`, which renders LaTeX and is new in 0.3.0 - see
-[LaTeX math](/android/guides/latex-math). The math engine ships no 32-bit `x86`
-library (`arm64-v8a`, `armeabi-v7a` and `x86_64` only), so only apps that add
-`math` take on that ABI limit.
+group as five [artifacts](/android/basics/installation#artifacts): `parser`,
+`ui`, `compose` (the one apps depend on; it pulls in `ui` and `parser`) and two
+optional ones that `compose` never pulls in:
+
+- `math` - renders LaTeX; new in 0.3.0. See
+  [LaTeX math](/android/guides/latex-math). The math engine ships no 32-bit
+  `x86` library (`arm64-v8a`, `armeabi-v7a` and `x86_64` only), so only apps
+  that add `math` take on that ABI limit.
+- `code-highlight` - colors fenced code blocks. It compiles tree-sitter and its
+  14 grammars into one native library for all four ABIs (`arm64-v8a`,
+  `armeabi-v7a`, `x86` and `x86_64`): about 8 MB per ABI uncompressed and about
+  1.1 MB per ABI compressed, with no way to compile in only some languages. See
+  [Code highlighting](/android/guides/code-highlighting).

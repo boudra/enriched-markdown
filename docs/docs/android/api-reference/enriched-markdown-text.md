@@ -379,11 +379,11 @@ Toggling it only re-lays out the view; nothing is re-rendered.
 
 ### `plugins` {#plugins}
 
-The plugins this view renders with. A plugin adds rendering the core library does not have - today that is LaTeX math, from the `math` artifact. The default reads `LocalMarkdownPlugins.current`, the plugins enabled by the enclosing scopes, so you usually enable plugins with a scope rather than this parameter.
+The plugins this view renders with. A plugin adds rendering the core library does not have - today that is LaTeX math, from the `math` artifact, and syntax highlighting for code blocks, from the [`code-highlight`](/android/guides/code-highlighting) artifact. The default reads `LocalMarkdownPlugins.current`, the plugins enabled by the enclosing scopes, so you usually enable plugins with a scope rather than this parameter.
 
 <PropInfo type="List<MarkdownPlugin>" default="LocalMarkdownPlugins.current" />
 
-Wrap a subtree in `MarkdownPlugins(...)` to enable plugins for every `EnrichedMarkdownText` inside it. Plugin artifacts ship a shorthand scope named after the plugin, so `LatexMathPlugin { ... }` is the same as `MarkdownPlugins(LatexMathPlugin) { ... }`:
+Wrap a subtree in `MarkdownPlugins(...)` to enable plugins for every `EnrichedMarkdownText` inside it. Plugin artifacts ship a shorthand scope named after the plugin, so `LatexMathPlugin { ... }` is the same as `MarkdownPlugins(LatexMathPlugin) { ... }`, and `CodeHighlightPlugin { ... }` the same as `MarkdownPlugins(CodeHighlightPlugin) { ... }`:
 
 ```kotlin
 import androidx.compose.runtime.Composable
@@ -404,7 +404,7 @@ fun MathScreen() {
 
 Scopes nest independently of [`MarkdownTheme`](/android/api-reference/markdown-theme). A plugin enabled in an inner scope replaces one with the same id from an outer scope, and where several plugins claim the same node the innermost wins. Passing `plugins` directly overrides the scopes for that one view - `plugins = emptyList()` turns them all off.
 
-A plugin renders only what the parser produces, so math still needs [`latexMath`](#latexmath) in `flags`. See [LaTeX math](/android/guides/latex-math).
+A plugin renders only what the parser produces, so math still needs [`latexMath`](#latexmath) in `flags`. See [LaTeX math](/android/guides/latex-math). Code highlighting needs no flag - fenced code is always parsed with its language. See [Code highlighting](/android/guides/code-highlighting).
 
 ## Callbacks
 
@@ -553,3 +553,4 @@ Events arrive on the main thread. Each distinct event is reported **once** per v
 - [`MarkdownTheme`](/android/api-reference/markdown-theme) - providing and layering styles.
 - [Element structure](/android/api-reference/element-structure) - what each Markdown construct renders as.
 - [LaTeX math](/android/guides/latex-math) - setting up the math plugin.
+- [Code highlighting](/android/guides/code-highlighting) - setting up the code-highlight plugin.

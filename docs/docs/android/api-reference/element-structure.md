@@ -18,19 +18,19 @@ The document renders into native text views, with block structure drawn by spans
 
 ### Block elements
 
-| Element           | Markdown                             | Notes                                                                                                       |
-| ----------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| Heading           | `# H1` … `###### H6`                 | Six levels, each styled independently                                                                       |
-| Paragraph         | Text separated by a blank line       |                                                                                                             |
-| Blockquote        | `> quoted`                           | Nests                                                                                                       |
-| Admonition        | `> [!NOTE]`                          | Needs `Md4cFlags(admonitions = true)` - see [below](#admonitions)                                           |
-| Unordered list    | `- item`                             | Nests                                                                                                       |
-| Ordered list      | `1. item`                            | Nests                                                                                                       |
-| Task list         | `- [ ]` / `- [x]`                    | Tappable - see [`onTaskListItemToggle`](/android/api-reference/enriched-markdown-text#ontasklistitemtoggle) |
-| Table             | GFM pipe table                       | Always enabled - see [below](#tables)                                                                       |
-| Fenced code block | ` ```kotlin `                        | Language label is parsed; no syntax highlighting                                                            |
-| Block image       | `![alt](url)` at the start of a line | See [below](#images-block-vs-inline)                                                                        |
-| Thematic break    | `---`                                |                                                                                                             |
+| Element           | Markdown                             | Notes                                                                                                            |
+| ----------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Heading           | `# H1` … `###### H6`                 | Six levels, each styled independently                                                                            |
+| Paragraph         | Text separated by a blank line       |                                                                                                                  |
+| Blockquote        | `> quoted`                           | Nests                                                                                                            |
+| Admonition        | `> [!NOTE]`                          | Needs `Md4cFlags(admonitions = true)` - see [below](#admonitions)                                                |
+| Unordered list    | `- item`                             | Nests                                                                                                            |
+| Ordered list      | `1. item`                            | Nests                                                                                                            |
+| Task list         | `- [ ]` / `- [x]`                    | Tappable - see [`onTaskListItemToggle`](/android/api-reference/enriched-markdown-text#ontasklistitemtoggle)      |
+| Table             | GFM pipe table                       | Always enabled - see [below](#tables)                                                                            |
+| Fenced code block | ` ```python `                        | Colored by the fence's language with the optional [`code-highlight`](/android/guides/code-highlighting) artifact |
+| Block image       | `![alt](url)` at the start of a line | See [below](#images-block-vs-inline)                                                                             |
+| Thematic break    | `---`                                |                                                                                                                  |
 
 ### Inline elements
 

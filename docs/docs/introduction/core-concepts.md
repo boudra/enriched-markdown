@@ -113,7 +113,7 @@ Prefix a line with `>` to quote it. Blockquotes can contain other Markdown and c
 
 ### Code blocks
 
-Fence a block of code with triple backticks. An optional language after the opening fence enables syntax highlighting in the React Native package on iOS and Android. The standalone iOS package highlights code only when you add the optional `EnrichedMarkdownSyntaxHighlighting` product and apply [`.markdownSyntaxHighlighting()`](/ios/guides/syntax-highlighting); the standalone Android package does not highlight code blocks.
+Fence a block of code with triple backticks. An optional language after the opening fence enables syntax highlighting in the React Native package on iOS and Android. The standalone iOS package highlights code only when you add the optional `EnrichedMarkdownSyntaxHighlighting` product and apply [`.markdownSyntaxHighlighting()`](/ios/guides/syntax-highlighting), and the standalone Android package only when you add the optional `code-highlight` artifact and enable [`CodeHighlightPlugin`](/android/guides/code-highlighting).
 
 ````md
 ```tsx

@@ -93,7 +93,7 @@ If the parser's native library fails to load - for example, because an ABI split
 
 ## The artifacts {#artifacts}
 
-The package publishes four artifacts under the `com.swmansion.enriched.markdown` group, all with the same version:
+The package publishes five artifacts under the `com.swmansion.enriched.markdown` group, all with the same version:
 
 | Artifact | What it is | Depend on it directly? |
 | --- | --- | --- |
@@ -101,6 +101,7 @@ The package publishes four artifacts under the `com.swmansion.enriched.markdown`
 | `ui` | The view-based renderer underneath, which lays the document out in native views | No - comes transitively |
 | `parser` | The native [md4c](https://github.com/mity/md4c) parser and its JNI bindings | No - comes transitively |
 | `math` | Optional LaTeX math rendering, backed by the RaTeX engine (`io.github.erweixin:ratex-android`) | Only if you render math |
+| `code-highlight` | Optional syntax highlighting for fenced code blocks, backed by tree-sitter | Only if you color code |
 
 `compose` exposes `ui` as an `api` dependency, and `ui` does the same for `parser`, so declaring `compose` is enough to get all three. Split them out only if you are embedding the renderer in a View-based screen with no Compose at all, which is outside what these docs cover.
 
@@ -117,9 +118,22 @@ dependencies {
 
 On an `x86` device or emulator, equations fall back to their raw source rather than crashing. Enabling the plugin and the parser flag that goes with it is covered in [LaTeX math](/android/guides/latex-math).
 
+### Code highlighting is opt-in
+
+`code-highlight` is kept out of `compose` for its size: it compiles tree-sitter and 14 grammars into a native library of about 8 MB per ABI installed (about 1.1 MB per ABI of download). It is built for all four ABIs the parser supports, `x86` included. An app that shows no code leaves it out; one that does adds it at the same version:
+
+```kotlin
+dependencies {
+  implementation("com.swmansion.enriched.markdown:compose:0.3.0")
+  implementation("com.swmansion.enriched.markdown:code-highlight:0.3.0")
+}
+```
+
+Without it, or with it but not enabled, code blocks render in the plain `codeBlock` color. Enabling it and setting token colors is covered in [Code highlighting](/android/guides/code-highlighting).
+
 ## R8 and ProGuard
 
-Nothing to configure. The parser is reached from C++ through hardcoded class-name lookups that R8 cannot trace, so the `parser` artifact ships the `-keep` rules it needs as **consumer** ProGuard rules. `math` ships its own as well: it keeps the RaTeX engine's classes, and stops R8 from failing on a Compose runtime annotation in a View-only app. Both sets are applied to your app automatically when you enable minification.
+Nothing to configure. The parser is reached from C++ through hardcoded class-name lookups that R8 cannot trace, so the `parser` artifact ships the `-keep` rules it needs as **consumer** ProGuard rules. `math` and `code-highlight` ship their own as well: `math` keeps the RaTeX engine's classes, `code-highlight` keeps the class its native library binds to by name, and both stop R8 from failing on a Compose runtime annotation in a View-only app. Every set is applied to your app automatically when you enable minification.
 
 ## Next steps
 

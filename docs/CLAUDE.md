@@ -50,6 +50,7 @@ android/              (30)  basics/ (10)        installation, your-first-screen
                                                 markdown-theme, style-properties,
                                                 element-structure
                             guides/ (30)        parser-extensions, latex-math,
+                                                code-highlighting,
                                                 image-caching, custom-fonts,
                                                 compose-interop
 react-native/         (40)  basics/ (10)        installation, your-first-project
@@ -91,9 +92,10 @@ misc/                 (60)  compatibility.mdx, breaking-changes,
   diverge where the packages do. Both render tables, spoilers, highlight and
   LaTeX (iOS through the optional `EnrichedMarkdownLaTeX` product, Android
   through the optional `math` artifact and its `LatexMathPlugin`), so both have
-  a `latex-math` guide. Only iOS ships code-block syntax highlighting (the
-  optional `EnrichedMarkdownSyntaxHighlighting` product, its own guide);
-  Android's is still in progress. iOS exposes behavior through SwiftUI view
+  a `latex-math` guide. Both ship code-block syntax highlighting as an
+  optional add-on with its own guide: iOS as the
+  `EnrichedMarkdownSyntaxHighlighting` product (`ios/guides/syntax-highlighting`),
+  Android as the `code-highlight` artifact (`android/guides/code-highlighting`). iOS exposes behavior through SwiftUI view
   modifiers rather than composable parameters, so it gets a `uikit-interop`
   guide where Android gets `compose-interop`. iOS's fallback renderer emits a
   node's **children**, so unsupported syntax loses styling, not text; Android's

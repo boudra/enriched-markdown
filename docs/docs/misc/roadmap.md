@@ -35,7 +35,7 @@ SwiftUI and Jetpack Compose apps, and have their own columns.
 | Spoilers | Yes | Yes | Yes | Yes | Planned |
 | [Videos](/react-native/api-reference/element-structure#videos) | Yes | Planned | Planned | Yes | Planned |
 | [LaTeX math](/rich-text-formatting/latex-math) | Yes | Yes | Yes | Inline only | Yes |
-| [Code-block highlighting](/rich-text-formatting/code-highlighting) | Yes | Yes | In progress | Yes | Planned |
+| [Code-block highlighting](/rich-text-formatting/code-highlighting) | Yes | Yes | Yes | Yes | Planned |
 | [Markdown streaming](/rich-text-formatting/markdown-streaming) | Yes | Planned | Planned | Instant reveal | Planned |
 | [Smart copy](/user-experience/copy-options) | Yes | Plain text + HTML | Yes | Yes | Planned |
 | [Accessibility](/user-experience/accessibility) | Yes | Yes | Partial | Planned | Partial |
@@ -43,9 +43,9 @@ SwiftUI and Jetpack Compose apps, and have their own columns.
 | `EnrichedMarkdownTextInput` (editor) | Yes | Planned | Planned | Yes | Planned |
 
 In the native columns, LaTeX math comes from an optional add-on - the
-`EnrichedMarkdownLaTeX` product on iOS, the `math` artifact on Android - and iOS
-code-block highlighting from the optional `EnrichedMarkdownSyntaxHighlighting`
-product. The iOS package's smart copy writes plain text and HTML, with no RTF
+`EnrichedMarkdownLaTeX` product on iOS, the `math` artifact on Android - and so
+does code-block highlighting: the `EnrichedMarkdownSyntaxHighlighting` product on
+iOS, the `code-highlight` artifact on Android. The iOS package's smart copy writes plain text and HTML, with no RTF
 or RTFD flavor. The Android package's accessibility strings are hard-coded
 English with no way to override them.
 
@@ -60,11 +60,6 @@ English with no way to override them.
   ships now.
 - **Tail fade-in animation**, which falls back to an instant reveal.
 - **System font-scale observation.**
-
-### Android renderer {#android-renderer}
-
-- **Code-block syntax highlighting.** Fenced code blocks render as plain
-  monospaced text today. `==highlight==` marks already render.
 
 ## Planned
 

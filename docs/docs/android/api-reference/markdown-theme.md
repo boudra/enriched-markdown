@@ -232,7 +232,7 @@ fun ThemedMarkdown(content: @Composable () -> Unit) {
 }
 ```
 
-Every element with a color of its own - inline code, blockquotes, tables, list markers, task lists - needs a dark value too. Code blocks are the exception: their default is already a dark block. See [Style properties](/android/api-reference/style-properties) for each element's color properties.
+Every element with a color of its own - inline code, blockquotes, tables, list markers, task lists - needs a dark value too. Code blocks are the exception: their default is already a dark block, and so is the palette of the optional [code highlighting](/android/guides/code-highlighting#styling). See [Style properties](/android/api-reference/style-properties) for each element's color properties.
 
 ### `MarkdownStyle.merge` {#markdownstylemerge}
 
