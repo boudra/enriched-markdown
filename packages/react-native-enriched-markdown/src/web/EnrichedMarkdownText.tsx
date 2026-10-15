@@ -47,7 +47,10 @@ export const EnrichedMarkdownText = ({
     [markdownStyle]
   );
 
-  const [ast, setAst] = useState<ASTNode | null>(null);
+  const [parsed, setParsed] = useState<{
+    ast: ASTNode;
+    markdown: string;
+  } | null>(null);
   const [katex, setKatex] = useState<KaTeXInstance | null>(null);
   const [parseError, setParseError] = useState<boolean>(false);
 
@@ -93,13 +96,14 @@ export const EnrichedMarkdownText = ({
 
           setParseError(false);
           setKatex(katexInstance);
-          setAst(
-            recognizeTextLinks(
+          setParsed({
+            markdown,
+            ast: recognizeTextLinks(
               result,
               linkRecognitionRef.current?.text,
               linkRecognitionRef.current?.inlineCode
-            )
-          );
+            ),
+          });
         }
       })
       .catch((error) => {
@@ -109,7 +113,7 @@ export const EnrichedMarkdownText = ({
           }
 
           setParseError(true);
-          setAst(null);
+          setParsed(null);
           setKatex(null);
         }
       });
@@ -197,13 +201,12 @@ export const EnrichedMarkdownText = ({
     );
   }
 
-  if (!ast) return null;
-
-  const children = ast.children ?? [];
+  const children = parsed?.ast.children ?? [];
   const lastIdx = children.length - 1;
 
   return (
     <div
+      aria-busy={parsed?.markdown !== markdown}
       className={ENRM_TEXT_CLASS}
       style={wrapperStyle}
       dir={dir}
