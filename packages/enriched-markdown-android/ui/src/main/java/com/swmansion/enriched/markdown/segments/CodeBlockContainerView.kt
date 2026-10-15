@@ -1,3 +1,5 @@
+@file:OptIn(InternalPluginApi::class)
+
 package com.swmansion.enriched.markdown.segments
 
 import android.content.ClipData
@@ -5,13 +7,15 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
-import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.util.TypedValue
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import androidx.appcompat.widget.AppCompatTextView
 import com.swmansion.enriched.markdown.parser.MarkdownASTNode
+import com.swmansion.enriched.markdown.plugin.CodeBlockDecorator
+import com.swmansion.enriched.markdown.plugin.InternalPluginApi
 import com.swmansion.enriched.markdown.spans.LineHeightSpan
 import com.swmansion.enriched.markdown.styles.CodeBlockStyle
 import com.swmansion.enriched.markdown.styles.StyleConfig
@@ -28,7 +32,7 @@ import kotlin.math.ceil
  */
 class CodeBlockContainerView(
   context: Context,
-  styleConfig: StyleConfig,
+  private val styleConfig: StyleConfig,
 ) : FrameLayout(context),
   BlockSegmentView {
   private val codeBlockStyle: CodeBlockStyle = styleConfig.codeBlockStyle
@@ -93,11 +97,15 @@ class CodeBlockContainerView(
     addView(scrollView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
   }
 
-  fun applyCodeBlockNode(node: MarkdownASTNode) {
+  /** [text] is what [buildCodeText] made of [node], built off the main thread when it ran decorators. */
+  fun applyCodeBlockNode(
+    node: MarkdownASTNode,
+    text: CharSequence = buildCodeText(node, styleConfig, emptyList(), context),
+  ) {
     code = extractCode(node)
-    language = node.getAttribute("language")?.takeIf { it.isNotEmpty() }
+    language = languageOf(node)
     fenceChar = node.getAttribute("fenceChar")?.firstOrNull() ?: '`'
-    textView.text = buildCodeText(code, codeBlockStyle)
+    textView.text = text
   }
 
   override fun onMeasure(
@@ -167,13 +175,27 @@ class CodeBlockContainerView(
       return "$fence${language.orEmpty()}\n$code\n$fence"
     }
 
+    fun languageOf(node: MarkdownASTNode): String? = node.getAttribute("language")?.takeIf { it.isNotBlank() }
+
+    /**
+     * The block's code as the view displays it. [decorators] run here as they do in core's code
+     * block renderer for nested blocks, so this is meant for the render thread.
+     */
     fun buildCodeText(
-      code: String,
-      style: CodeBlockStyle,
-    ): SpannableString =
-      SpannableString(code).apply {
-        if (style.lineHeight > 0f && isNotEmpty()) {
-          setSpan(LineHeightSpan(style.lineHeight), 0, length, SPAN_FLAGS_EXCLUSIVE_EXCLUSIVE)
+      node: MarkdownASTNode,
+      style: StyleConfig,
+      decorators: List<CodeBlockDecorator>,
+      context: Context,
+    ): SpannableStringBuilder =
+      SpannableStringBuilder(extractCode(node)).apply {
+        val lineHeight = style.codeBlockStyle.lineHeight
+        if (lineHeight > 0f && isNotEmpty()) {
+          setSpan(LineHeightSpan(lineHeight), 0, length, SPAN_FLAGS_EXCLUSIVE_EXCLUSIVE)
+        }
+        // The text view paints the block's color, so a decorator's color spans override it.
+        val language = languageOf(node)
+        for (decorator in decorators) {
+          decorator.decorate(this, 0, length, language, style, context)
         }
       }
   }

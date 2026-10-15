@@ -23,33 +23,36 @@ Text renders into **native text views**, with block structure drawn by spans rat
 | Heading           | `# H1` … `###### H6`               | Six levels, each styled independently                                                                     |
 | Paragraph         | Text separated by a blank line     |                                                                                                           |
 | Blockquote        | `> quoted`                         | Nests                                                                                                     |
-| Admonition        | `> [!NOTE]`                        | Needs `Md4cFlags(admonitions = true)` - see [below](#admonitions)                                         |
+| Admonition        | `> [!NOTE]`                        | Needs `MarkdownOptions(admonitions = true)` - see [below](#admonitions)                                   |
 | Unordered list    | `- item`                           | Nests                                                                                                     |
 | Ordered list      | `1. item`                          | Nests                                                                                                     |
 | Task list         | `- [ ]` / `- [x]`                  | Tappable - see [`onTaskListItemPress`](/android/api-reference/enriched-markdown-text#ontasklistitempress) |
 | Table             | GFM pipe table                     | Always enabled - see [below](#tables)                                                                     |
-| Fenced code block | ` ```kotlin `                      | Long lines scroll - see [below](#code-blocks)                                                             |
+| Fenced code block | ` ```kotlin `                      | Long lines scroll; colored by language with `CodeHighlightPlugin` - see [below](#code-blocks)             |
 | Block image       | `![alt](url)` alone in a paragraph | See [below](#images-block-vs-inline)                                                                      |
 | Thematic break    | `---`                              |                                                                                                           |
+| Math block        | `$$...$$`                          | Needs `LatexMathPlugin` - see [Math](/android/guides/parser-extensions#math-is-not-an-option)             |
 
 ### Inline elements
 
-| Element       | Markdown                     | Notes                                                                                             |
-| ------------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| Strong        | `**bold**`, `__bold__`       |                                                                                                   |
-| Emphasis      | `*italic*`, `_italic_`       |                                                                                                   |
-| Underline     | `_text_`, `__text__`         | Needs `Md4cFlags(underline = true)`, and **replaces** the italic/bold meaning of those markers    |
-| Strikethrough | `~~struck~~`                 |                                                                                                   |
-| Inline code   | `` `code` ``                 |                                                                                                   |
-| Link          | `[text](url)`                | Inert until you handle [`onLinkClick`](/android/api-reference/enriched-markdown-text#onlinkclick) |
-| Autolink      | `<https://…>`, or a bare URL | Bare URLs need `permissiveAutolinks`, which is on by default                                      |
-| Inline image  | `![alt](url)` beside text    | See [below](#images-block-vs-inline)                                                              |
-| Superscript   | `^text^`                     | Needs `Md4cFlags(superscript = true)`                                                             |
-| Subscript     | `~text~`                     | Needs `Md4cFlags(subscript = true)`                                                               |
-| Highlight     | `==text==`                   | Needs `Md4cFlags(highlight = true)`                                                               |
+| Element       | Markdown                     | Notes                                                                                                |
+| ------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Strong        | `**bold**`, `__bold__`       |                                                                                                      |
+| Emphasis      | `*italic*`, `_italic_`       |                                                                                                      |
+| Underline     | `_text_`, `__text__`         | Needs `MarkdownOptions(underline = true)`, and **replaces** the italic/bold meaning of those markers |
+| Strikethrough | `~~struck~~`                 |                                                                                                      |
+| Inline code   | `` `code` ``                 |                                                                                                      |
+| Link          | `[text](url)`                | Inert until you handle [`onLinkClick`](/android/api-reference/enriched-markdown-text#onlinkclick)    |
+| Autolink      | `<https://…>`, or a bare URL | Bare URLs need `permissiveAutolinks`, which is on by default                                         |
+| Inline image  | `![alt](url)` beside text    | See [below](#images-block-vs-inline)                                                                 |
+| Superscript   | `^text^`                     | Needs `MarkdownOptions(superscript = true)`                                                          |
+| Subscript     | `~text~`                     | Needs `MarkdownOptions(subscript = true)`                                                            |
+| Highlight     | `==text==`                   | Needs `MarkdownOptions(highlight = true)`                                                            |
+| Inline math   | `$...$`                      | Needs `LatexMathPlugin` - see [Math](/android/guides/parser-extensions#math-is-not-an-option)        |
+| Spoiler       | `\|\|text\|\|`               | Concealed until tapped; adjacent spoilers reveal together                                            |
 
 :::important
-The `_` markers are context-dependent. By default `_italic_` and `__bold__` mean the same as `*italic*` and `**bold**`, but `Md4cFlags(underline = true)` reinterprets both `_text_` and `__text__` as underline, so under that flag they no longer produce emphasis or strong. The asterisk markers `*` and `**` always mean emphasis and strong, whatever the flag.
+The `_` markers are context-dependent. By default `_italic_` and `__bold__` mean the same as `*italic*` and `**bold**`, but `MarkdownOptions(underline = true)` reinterprets both `_text_` and `__text__` as underline, so under that option they no longer produce emphasis or strong. The asterisk markers `*` and `**` always mean emphasis and strong, whatever the option.
 :::
 
 ## Nesting
@@ -103,7 +106,7 @@ A blockquote whose **first line** is one of the five GitHub alert markers render
 
 The five types are `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, and `[!CAUTION]`. Colors come from the [`admonitions`](/android/api-reference/style-properties#admonitions) style block.
 
-This is an opt-in parser extension. Without `Md4cFlags(admonitions = true)` the marker stays **literal text** inside an ordinary quote.
+This is an opt-in parser extension. Without `MarkdownOptions(admonitions = true)` the marker stays **literal text** inside an ordinary quote.
 
 Two behaviors worth knowing:
 
@@ -114,7 +117,7 @@ Copying a callout reproduces its `> [!NOTE]` marker, and TalkBack announces the 
 
 ## Tables
 
-GFM pipe tables render as real views inside the text rather than as monospaced ASCII, and need no flag - they are always parsed:
+GFM pipe tables render as real views inside the text rather than as monospaced ASCII, and need no option - they are always parsed:
 
 ```markdown
 | Package                   | Platform |
@@ -136,7 +139,7 @@ Fenced code blocks keep their lines intact:
 - Lines never wrap. A block wider than the view **scrolls horizontally in place**, inside its box, without moving the rest of the document.
 - This applies to code blocks at the top level of the document. A code block inside a list item or a quote wraps its lines instead.
 - Long-press a code block to copy its code, or to copy it as fenced Markdown. A top-level code block is not part of the text selection.
-- The language label is parsed, but there is no syntax highlighting.
+- The language label is parsed. To color code by it, add `CodeHighlightPlugin` - see [Code highlighting](/android/guides/code-highlighting).
 
 ## Images: block vs. inline
 
@@ -161,22 +164,22 @@ So putting an image on its own line is the whole gesture - there is no separate 
 
 ## Line breaks
 
-By default Markdown **reflows** text: a single newline inside a paragraph is treated as a space, and consecutive blank lines collapse into one paragraph separator. Two parser flags change that.
+By default Markdown **reflows** text: a single newline inside a paragraph is treated as a space, and consecutive blank lines collapse into one paragraph separator. Two options change that.
 
 ### Preserving single newlines
 
-`Md4cFlags(hardSoftBreaks = true)` turns every single newline into a real line break, so the lines you typed are the lines you get:
+`MarkdownOptions(hardSoftBreaks = true)` turns every single newline into a real line break, so the lines you typed are the lines you get:
 
 ```markdown
 Roses are red
 Violets are blue
 ```
 
-Without the flag that renders as one line. With it, two. This is the flag to reach for when you render user-authored text - chat messages, notes - where people expect Enter to mean Enter.
+Without the option that renders as one line. With it, two. This is the option to reach for when you render user-authored text - chat messages, notes - where people expect Enter to mean Enter.
 
 ### Blank lines
 
-`Md4cFlags(preserveBlankLines = true)` keeps consecutive blank lines instead of collapsing them, so deliberate vertical whitespace in the source survives into the output:
+`MarkdownOptions(preserveBlankLines = true)` keeps consecutive blank lines instead of collapsing them, so deliberate vertical whitespace in the source survives into the output:
 
 ```markdown
 A first paragraph.
@@ -184,22 +187,6 @@ A first paragraph.
 A second one, three blank lines later.
 ```
 
-Without the flag those three blank lines collapse to one paragraph break; with it, the gap is kept.
+Without the option those three blank lines collapse to one paragraph break; with it, the gap is kept.
 
-Both flags are off by default, and both are set per instance through [`flags`](/android/api-reference/enriched-markdown-text#flags).
-
-## Not rendered yet
-
-The parser understands more than the renderer draws. These constructs parse without error but produce no special rendering today:
-
-| Element                       | Status                          |
-| ----------------------------- | ------------------------------- |
-| LaTeX math (inline and block) | Renderer in progress            |
-| Spoilers                      | Renderer in progress            |
-| Code syntax highlighting      | Not yet built into this package |
-
-:::caution
-A construct with no renderer has its text **dropped from the output** rather than shown unstyled, so enabling [`latexMath`](/android/api-reference/enriched-markdown-text#latexmath) makes that content vanish. The flag is off by default; leave it off until the renderer lands. Spoilers have no flag to enable, so they are simply parsed and skipped.
-:::
-
-See the [roadmap](/misc/roadmap) for what is landing next.
+Both options are off by default, and both are set per instance through [`options`](/android/api-reference/enriched-markdown-text#options).

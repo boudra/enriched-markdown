@@ -55,7 +55,8 @@ fun splitASTIntoSegments(
         segments.add(MarkdownSegment.Table(child))
       }
 
-      child.type == MarkdownASTNode.NodeType.CodeBlock -> {
+      // A plugin's own code block renderer only runs in a text segment.
+      child.type == MarkdownASTNode.NodeType.CodeBlock && child.type !in plugins.nodeRenderers -> {
         flushTextNodes()
         segments.add(MarkdownSegment.CodeBlock(child))
       }

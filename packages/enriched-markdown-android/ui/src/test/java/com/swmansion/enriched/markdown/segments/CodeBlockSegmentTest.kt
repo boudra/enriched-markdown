@@ -1,6 +1,10 @@
+@file:OptIn(InternalPluginApi::class)
+
 package com.swmansion.enriched.markdown.segments
 
 import android.content.Context
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.widget.HorizontalScrollView
 import android.widget.TextView
@@ -8,10 +12,16 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swmansion.enriched.markdown.parser.MarkdownASTNode
 import com.swmansion.enriched.markdown.parser.MarkdownASTNode.NodeType
+import com.swmansion.enriched.markdown.plugin.CodeBlockDecorator
+import com.swmansion.enriched.markdown.plugin.InternalPluginApi
+import com.swmansion.enriched.markdown.plugin.MarkdownPlugin
+import com.swmansion.enriched.markdown.plugin.PluginRegistry
 import com.swmansion.enriched.markdown.plugin.PluginSnapshot
+import com.swmansion.enriched.markdown.renderer.CodeBlockRenderer
 import com.swmansion.enriched.markdown.styles.CodeBlockStyle
 import com.swmansion.enriched.markdown.test.MarkdownRenderTestSupport.defaultStyle
 import com.swmansion.enriched.markdown.test.MarkdownRenderTestSupport.renderSegments
+import com.swmansion.enriched.markdown.test.MarkdownRenderTestSupport.renderSegmentsOf
 import com.swmansion.enriched.markdown.test.MarkdownRenderTestSupport.styleWithCodeBlock
 import com.swmansion.enriched.markdown.test.TestAstFactory.blockquote
 import com.swmansion.enriched.markdown.test.TestAstFactory.codeBlock
@@ -100,6 +110,54 @@ class CodeBlockSegmentTest {
     assertEquals(signature, again)
     assertNotEquals(signature, changed)
     assertNotEquals(signature, asText)
+  }
+
+  @Test
+  fun aPluginsCodeBlockRendererKeepsTheBlockInItsTextSegment() {
+    val plugin =
+      object : MarkdownPlugin {
+        override val id = "code-renderer"
+
+        override fun install(registry: PluginRegistry) =
+          registry.registerNodeRenderer(NodeType.CodeBlock) { config, _ -> CodeBlockRenderer(config) }
+      }
+    val doc = document(paragraph(text("Before")), codeBlock("val x = 1\n"))
+
+    assertTrue(splitASTIntoSegments(doc, PluginSnapshot.of(plugin)).single() is MarkdownSegment.Text)
+  }
+
+  @Test
+  fun aTopLevelBlockIsDecoratedOverItsCodeWithItsLanguage() {
+    val calls = mutableListOf<Pair<String, String?>>()
+    val decorator =
+      CodeBlockDecorator { builder, start, end, language, _, _ ->
+        calls += builder.subSequence(start, end).toString() to language
+        builder.setSpan(ForegroundColorSpan(TOKEN_COLOR), start, start + 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      }
+    val plugins =
+      PluginSnapshot.of(
+        object : MarkdownPlugin {
+          override val id = "decorating"
+
+          override fun install(registry: PluginRegistry) = registry.registerCodeBlockDecorator(decorator)
+        },
+      )
+    val segments = splitASTIntoSegments(document(fencedCodeBlock("val x = 1\n", language = "kotlin")), plugins)
+
+    val rendered = MarkdownSegmentRenderer.render(segments, defaultStyle, context, plugins = plugins).single() as RenderedSegment.CodeBlock
+    val view = CodeBlockContainerView(context, defaultStyle).apply { applyCodeBlockNode(rendered.node, rendered.text) }
+
+    assertEquals(listOf("val x = 1" to "kotlin"), calls)
+    val shown = textViewOf(view).text as Spanned
+    assertEquals(TOKEN_COLOR, shown.getSpans(0, 3, ForegroundColorSpan::class.java).single().foregroundColor)
+  }
+
+  @Test
+  fun withNoPluginsTheBlockShowsItsPlainCode() {
+    val rendered = renderSegmentsOf(document(fencedCodeBlock("val x = 1\n"))).single() as RenderedSegment.CodeBlock
+
+    assertEquals("val x = 1", rendered.text.toString())
+    assertTrue((rendered.text as Spanned).getSpans(0, rendered.text.length, ForegroundColorSpan::class.java).isEmpty())
   }
 
   // B. Layout
@@ -227,5 +285,9 @@ class CodeBlockSegmentTest {
     val markdown = CodeBlockContainerView.fencedMarkdown("```\nnested\n```", "md", '`')
 
     assertEquals("````md\n```\nnested\n```\n````", markdown)
+  }
+
+  private companion object {
+    const val TOKEN_COLOR = 0xFF123456.toInt()
   }
 }
