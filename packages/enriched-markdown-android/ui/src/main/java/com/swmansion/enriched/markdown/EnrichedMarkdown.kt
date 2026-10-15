@@ -63,6 +63,10 @@ class EnrichedMarkdown(
   var options: MarkdownOptions = MarkdownOptions.Default
     private set
 
+  /** Whether fenced code blocks wrap long lines or scroll them. */
+  var codeBlockLayout: CodeBlockLayout = CodeBlockLayout.Wrapping
+    private set
+
   /** How unrevealed `||spoiler||` text is concealed. */
   var spoilerOverlay: SpoilerOverlay = SpoilerOverlay.Particles()
     private set
@@ -158,6 +162,13 @@ class EnrichedMarkdown(
   fun setOptions(options: MarkdownOptions) {
     if (this.options == options) return
     this.options = options
+    scheduleRenderIfNeeded()
+  }
+
+  /** A switch re-splits the document, and the changed segments' signatures rebuild their views. */
+  fun setCodeBlockLayout(layout: CodeBlockLayout) {
+    if (codeBlockLayout == layout) return
+    codeBlockLayout = layout
     scheduleRenderIfNeeded()
   }
 
@@ -347,6 +358,7 @@ class EnrichedMarkdown(
     val markdown = currentMarkdown
     val plugins = pluginSnapshot
     val parserFlags = plugins.adjustParserFlags(options.toParserFlags())
+    val codeBlockLayout = codeBlockLayout
     val onPluginEvent = renderPluginEventSink()
 
     val renderId = ++currentRenderId
@@ -374,7 +386,7 @@ class EnrichedMarkdown(
 
         if (renderId != currentRenderId) return@submit
 
-        val segments = splitASTIntoSegments(ast, plugins)
+        val segments = splitASTIntoSegments(ast, plugins, codeBlockLayout)
         val renderedSegments =
           MarkdownSegmentRenderer.render(
             segments,

@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import androidx.appcompat.widget.AppCompatTextView
+import com.swmansion.enriched.markdown.CodeBlockLayout
 import com.swmansion.enriched.markdown.parser.MarkdownASTNode
 import com.swmansion.enriched.markdown.plugin.CodeBlockDecorator
 import com.swmansion.enriched.markdown.plugin.InternalPluginApi
@@ -26,9 +27,10 @@ import com.swmansion.enriched.markdown.views.ContextMenuPopup
 import kotlin.math.ceil
 
 /**
- * Block segment view for a root-level fenced code block: the code never wraps and
- * scrolls horizontally inside the block's box instead. Code blocks nested in a list
- * or blockquote stay in their text segment, drawn by CodeBlockSpan, and wrap.
+ * Block segment view for a root-level fenced code block under [CodeBlockLayout.Scrollable]:
+ * the code never wraps and scrolls horizontally inside the block's box instead. Code blocks
+ * nested in a list or blockquote, and every block under [CodeBlockLayout.Wrapping], stay in
+ * their text segment, drawn by CodeBlockSpan, and wrap.
  */
 class CodeBlockContainerView(
   context: Context,
