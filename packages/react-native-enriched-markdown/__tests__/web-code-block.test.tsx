@@ -49,3 +49,27 @@ it('keeps the default code renderer when no override is supplied', () => {
   expect(html).toContain('aria-label="Code block: typescript"');
   expect(html).toContain('const value = 1;\n</code></pre>');
 });
+
+it('preserves ordered-list starts and link titles in semantic web output', () => {
+  const html = renderToStaticMarkup(
+    <RenderNode
+      node={{
+        type: 'OrderedList',
+        attributes: { start: '5' },
+        children: [
+          {
+            type: 'Link',
+            attributes: { url: 'https://example.com', title: 'Reference' },
+            children: [{ type: 'Text', content: 'docs' }],
+          },
+        ],
+      }}
+      style={style}
+      styles={buildStyles(style)}
+      callbacks={{}}
+      capabilities={{ katex: null, enableTaskListItemToggle: true }}
+    />
+  );
+  expect(html).toContain('start="5"');
+  expect(html).toContain('title="Reference"');
+});

@@ -81,6 +81,7 @@ function LinkRenderer({
   return (
     <a
       href={url}
+      title={node.attributes?.title}
       style={linkStyleForUrl(style, url)}
       target="_blank"
       rel="noopener noreferrer"
