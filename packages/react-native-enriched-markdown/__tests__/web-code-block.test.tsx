@@ -113,3 +113,15 @@ it.each(['markdown', 'text', 'inline-code'] as const)(
     act(() => tree.unmount());
   }
 );
+
+it('parses newly mounted text synchronously after shared WASM initialization', async () => {
+  const { parseMarkdown, parseMarkdownSync } =
+    await import('../src/web/parseMarkdown');
+  await parseMarkdown('Initialize', { latexMath: false });
+  const ast = parseMarkdownSync('Visible on first render', {
+    latexMath: false,
+  });
+  expect(ast).not.toBeNull();
+  expect(ast).not.toBeInstanceOf(Promise);
+  expect(JSON.stringify(ast)).toContain('Visible on first render');
+});
