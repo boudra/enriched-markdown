@@ -298,9 +298,12 @@ export const EnrichedMarkdownText = ({
   );
 
   const handleLinkPress = useCallback(
-    (e: NativeSyntheticEvent<LinkPressEvent>) => {
-      const { url } = e.nativeEvent;
-      onLinkPress?.({ url });
+    (e: NativeSyntheticEvent<{ url: string; sourceType: string }>) => {
+      const { url, sourceType } = e.nativeEvent;
+      onLinkPress?.({
+        url,
+        sourceType: sourceType as LinkPressEvent['sourceType'],
+      });
     },
     [onLinkPress]
   );
