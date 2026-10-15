@@ -1,3 +1,4 @@
+import type { MarkdownRenderers } from '../types/MarkdownRenderers';
 import type { ComponentType, ReactNode } from 'react';
 import type { MarkdownStyleInternal } from '../types/MarkdownStyleInternal';
 import type { Styles } from './styles';
@@ -88,6 +89,7 @@ export interface RendererCallbacks {
 }
 
 export interface RenderCapabilities {
+  renderers?: MarkdownRenderers;
   katex: KaTeXInstance | null;
   /** When false, task list checkboxes render read-only and ignore clicks. */
   enableTaskListItemToggle: boolean;

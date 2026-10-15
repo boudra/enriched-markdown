@@ -27,6 +27,7 @@ export const EnrichedMarkdownText = ({
   markdownStyle = {},
   md4cFlags = {},
   linkRecognition,
+  renderers,
   onLinkPress,
   onLinkLongPress,
   onImagePress,
@@ -148,8 +149,8 @@ export const EnrichedMarkdownText = ({
   );
 
   const capabilities = useMemo<RenderCapabilities>(
-    () => ({ katex, enableTaskListItemToggle }),
-    [katex, enableTaskListItemToggle]
+    () => ({ katex, enableTaskListItemToggle, renderers }),
+    [katex, enableTaskListItemToggle, renderers]
   );
 
   const lastChildStyle = useMemo(
