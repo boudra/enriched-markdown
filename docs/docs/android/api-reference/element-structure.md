@@ -141,6 +141,7 @@ Pass [`codeBlockLayout = CodeBlockLayout.Scrollable`](/android/api-reference/enr
 - Lines never wrap. A block wider than the view **scrolls horizontally in place**, inside its box, without moving the rest of the document.
 - This applies to code blocks at the top level of the document. A code block inside a list item or a quote still wraps its lines.
 - Long-press a scrolling code block to copy its code, or to copy it as fenced Markdown. It is not part of the text selection.
+- The block splits the text around it into separate selections, as a table does. **Select all** then **Copy as Markdown** copies only the text up to the nearest block, rebuilt from what is shown rather than the document's original Markdown, and leaves the code out. Long-press the block to copy the code itself.
 
 In either layout the language label is parsed. To color code by it, add `CodeHighlightPlugin` - see [Code highlighting](/android/guides/code-highlighting).
 
